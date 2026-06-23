@@ -2,6 +2,8 @@ import Phaser from 'phaser';
 import { scaleOf } from '../config/layout';
 import { LEVELS } from '../config/levels';
 import { VERDICTS, pick } from '../config/flavor';
+import { submitScore } from '../core/scores';
+import { sound } from '../audio/Sound';
 
 interface GameOverData {
   distance: number;
@@ -27,6 +29,8 @@ export class GameOverScene extends Phaser.Scene {
     const won = !!data.won;
     if (won) this.cameras.main.setBackgroundColor(0x0a160a);
 
+    const { best, isRecord } = submitScore(data.distance, data.levelReached);
+
     this.add.text(W / 2, H * 0.16, won ? '🏆' : '💥', { fontSize: font(72) }).setOrigin(0.5);
     this.add
       .text(W / 2, H * 0.27, won ? 'YOU SHIPPED IT' : 'TOTAL COLLAPSE', {
@@ -46,28 +50,52 @@ export class GameOverScene extends Phaser.Scene {
       })
       .setOrigin(0.5);
 
+    // NEW RECORD! badge.
+    if (isRecord) {
+      const badge = this.add
+        .text(W / 2, H * 0.385, '🏆 NEW RECORD! 🏆', {
+          fontFamily: 'system-ui, sans-serif',
+          fontSize: font(18),
+          color: '#ffd23f',
+          fontStyle: 'bold',
+        })
+        .setOrigin(0.5)
+        .setDepth(10);
+      this.tweens.add({
+        targets: badge,
+        scale: 1.12,
+        duration: 480,
+        yoyo: true,
+        repeat: -1,
+        ease: 'Sine.InOut',
+      });
+      // A little fanfare (unless a win already played the victory sting).
+      if (!won) this.time.delayedCall(250, () => sound.promote());
+    }
+
     const reached = LEVELS[data.levelReached]?.name ?? LEVELS[0].name;
-    const rows = [
+    const rows: Array<[string, string, string?]> = [
       ['Can kicked', `${data.distance} m`],
       ['Career stage', reached],
       ['Peak debt', `$${Math.floor(data.peakDebt)}`],
       ['Bugs squashed', `${data.bugsSquashed}`],
       ['Prod incidents', `${data.bugsExploded}`],
+      ['Personal best', `${best.distance} m`, '#ffd23f'],
     ];
-    rows.forEach(([k, v], i) => {
-      const y = H * 0.42 + i * 30 * s;
+    rows.forEach(([k, v, color], i) => {
+      const y = H * 0.43 + i * 29 * s;
       this.add
         .text(W * 0.18, y, k, {
           fontFamily: 'system-ui, sans-serif',
           fontSize: font(16),
-          color: '#9a9ab0',
+          color: color ?? '#9a9ab0',
         })
         .setOrigin(0, 0.5);
       this.add
         .text(W * 0.82, y, v, {
           fontFamily: 'system-ui, sans-serif',
           fontSize: font(16),
-          color: '#ffffff',
+          color: color ?? '#ffffff',
           fontStyle: 'bold',
         })
         .setOrigin(1, 0.5);

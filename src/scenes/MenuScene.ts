@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { scaleOf } from '../config/layout';
 import { MENU_TAGLINES, pick } from '../config/flavor';
+import { loadBest } from '../core/scores';
 import { sound } from '../audio/Sound';
 
 export class MenuScene extends Phaser.Scene {
@@ -47,6 +48,19 @@ export class MenuScene extends Phaser.Scene {
         lineSpacing: 6 * s,
       })
       .setOrigin(0.5);
+
+    // Personal best (only once they've set one).
+    const best = loadBest();
+    if (best.distance > 0) {
+      this.add
+        .text(W / 2, H * 0.545, `🏆 BEST  ${best.distance} m`, {
+          fontFamily: 'system-ui, sans-serif',
+          fontSize: font(16),
+          color: '#ffd23f',
+          fontStyle: 'bold',
+        })
+        .setOrigin(0.5);
+    }
 
     // Primary CTA — tap to start.
     const btn = this.add.rectangle(W / 2, H * 0.63, 240 * s, 72 * s, 0xff9f43).setOrigin(0.5);
