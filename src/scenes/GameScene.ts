@@ -35,6 +35,7 @@ interface RunStats {
 interface ButtonRefs {
   rect: Phaser.GameObjects.Rectangle;
   text: Phaser.GameObjects.Text;
+  caption: Phaser.GameObjects.Text;
   onTap: (b: ButtonRefs) => void;
 }
 
@@ -187,7 +188,7 @@ export class GameScene extends Phaser.Scene {
 
   private buildButtons() {
     // SHIP IT — fast, adds debt, kicks the can.
-    this.shipBtn = this.makeButton(0xff9f43, '🚀\nSHIP IT', (b) => {
+    this.shipBtn = this.makeButton(0xff9f43, '🚀 SHIP IT', 'faster · +debt', '#fff1df', (b) => {
       this.engine.shipIt();
       sound.ship();
       this.juice.pop(b.rect.x, b.rect.y - 78 * this.s, `+${TUNING.SHIP_BURST}m`, '#ffd23f', 24);
@@ -198,7 +199,7 @@ export class GameScene extends Phaser.Scene {
     });
 
     // PAY IT DOWN — slow, no distance, drains debt + pressure.
-    this.payBtn = this.makeButton(0x4a4a66, '🔧\nPAY DOWN', (b) => {
+    this.payBtn = this.makeButton(0x4a4a66, '🔧 PAY DOWN', 'safer · −debt', '#dfe6ff', (b) => {
       this.engine.payDown();
       sound.pay();
       this.juice.pop(b.rect.x, b.rect.y - 78 * this.s, `-$${TUNING.PAY_AMOUNT}`, '#7a9aff', 22);
@@ -211,8 +212,14 @@ export class GameScene extends Phaser.Scene {
     this.layoutButtons();
   }
 
-  private makeButton(color: number, label: string, onTap: (b: ButtonRefs) => void): ButtonRefs {
-    const rect = this.add.rectangle(0, 0, 160 * this.s, 120 * this.s, color).setDepth(200);
+  private makeButton(
+    color: number,
+    label: string,
+    caption: string,
+    captionColor: string,
+    onTap: (b: ButtonRefs) => void,
+  ): ButtonRefs {
+    const rect = this.add.rectangle(0, 0, 160 * this.s, 128 * this.s, color).setDepth(200);
     rect.setStrokeStyle(3 * this.s, 0xffffff, 0.4);
     const text = this.add
       .text(0, 0, label, {
@@ -221,22 +228,34 @@ export class GameScene extends Phaser.Scene {
         color: '#ffffff',
         fontStyle: 'bold',
         align: 'center',
-        lineSpacing: 4 * this.s,
+      })
+      .setOrigin(0.5)
+      .setDepth(201);
+    // Tiny caption spelling out what the button DOES.
+    const cap = this.add
+      .text(0, 0, caption, {
+        fontFamily: 'system-ui, sans-serif',
+        fontSize: `${Math.round(11 * this.s)}px`,
+        color: captionColor,
+        fontStyle: 'bold',
       })
       .setOrigin(0.5)
       .setDepth(201);
 
     // No per-object input — the scene hit-tests everything in one handler.
-    return { rect, text, onTap };
+    return { rect, text, caption: cap, onTap };
   }
 
   /** Anchor the two action buttons to the bottom of the current viewport. */
   private layoutButtons() {
     const y = this.H - 96 * this.s;
-    this.shipBtn.rect.setPosition(this.W * 0.27, y);
-    this.shipBtn.text.setPosition(this.W * 0.27, y);
-    this.payBtn.rect.setPosition(this.W * 0.73, y);
-    this.payBtn.text.setPosition(this.W * 0.73, y);
+    const place = (b: ButtonRefs, x: number) => {
+      b.rect.setPosition(x, y);
+      b.text.setPosition(x, y - 14 * this.s);
+      b.caption.setPosition(x, y + 34 * this.s);
+    };
+    place(this.shipBtn, this.W * 0.27);
+    place(this.payBtn, this.W * 0.73);
   }
 
   private onResize() {
@@ -244,6 +263,20 @@ export class GameScene extends Phaser.Scene {
     this.H = this.scale.height;
     this.s = scaleOf(this);
     if (this.shipBtn) this.layoutButtons();
+  }
+
+  /** Pulse a glow on whichever button the player should tap right now. */
+  private updateButtonHints() {
+    const pulse = 0.5 + 0.5 * Math.sin(this.time.now / 170);
+    // Over the line or pressure climbing → pay down; otherwise keep shipping.
+    const recommendPay = this.engine.pressure > 0.55 || this.engine.leverage > 0.05;
+    this.highlightButton(this.shipBtn, !recommendPay, 0xffd23f, pulse);
+    this.highlightButton(this.payBtn, recommendPay, 0xff6b6b, pulse);
+  }
+
+  private highlightButton(b: ButtonRefs, on: boolean, color: number, pulse: number) {
+    if (on) b.rect.setStrokeStyle((3 + pulse * 4) * this.s, color, 1);
+    else b.rect.setStrokeStyle(3 * this.s, 0xffffff, 0.22);
   }
 
   private showBanner(title: string, sub: string, subColor = '#ff9f43', yFactor = 0.4) {
@@ -866,6 +899,8 @@ export class GameScene extends Phaser.Scene {
       const frac = (this.engine.canDistance - this.prevGoal) / denom;
       this.hud.setTopBar(frac, CAREER_BAR_COLOR, `▸ NEXT BOSS ${Math.round(frac * 100)}%`, '#ffd23f');
     }
+
+    this.updateButtonHints();
 
     // Spawn incidents at a debt-scaled rate, but never past the cap — an
     // unbounded swarm tanks the frame rate and that's what eats taps.
