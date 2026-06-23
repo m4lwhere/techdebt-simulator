@@ -82,6 +82,22 @@
       #device-warning .emoji { font-size: 68px; line-height: 1; margin-bottom: 10px; }
       #device-warning h1 { color: #ff9f43; font-size: 24px; font-weight: 800; margin: 0 0 14px; }
       #device-warning p { color: #9a9ab0; font-size: 15px; line-height: 1.55; margin: 0 0 10px; }
+      #device-warning .scan {
+        color: #cfcfe0;
+        font-size: 14px;
+        font-weight: 700;
+        margin: 18px 0 8px;
+      }
+      #device-warning .qr {
+        width: 200px;
+        height: 200px;
+        margin: 0 auto;
+        background: #ffffff;
+        border-radius: 12px;
+        padding: 10px;
+        box-sizing: border-box;
+      }
+      #device-warning .qr img { width: 100%; height: 100%; display: block; }
       #device-warning .url {
         margin-top: 14px;
         font-size: 13px;
@@ -112,6 +128,10 @@
           large screen it’ll look stretched and play rough.
         </p>
         <p>For the real experience, open this page on your phone.</p>
+        <p class="scan">📷 Scan to play on your phone</p>
+        <div class="qr">
+          <img src="./qr.png" width="660" height="660" alt="QR code linking to the game" />
+        </div>
         <div class="url" id="dw-url"></div>
         <button id="dw-dismiss">Play anyway on this screen</button>
       </div>
