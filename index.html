@@ -65,10 +65,76 @@
         height: 100%;
       }
       #app canvas { display: block; }
+
+      /* Shown only on non-phone devices (see script at end of body). */
+      #device-warning {
+        position: fixed;
+        inset: 0;
+        z-index: 1000;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        background: #0d0d14;
+        padding: 24px;
+        box-sizing: border-box;
+      }
+      #device-warning .card { max-width: 440px; text-align: center; }
+      #device-warning .emoji { font-size: 68px; line-height: 1; margin-bottom: 10px; }
+      #device-warning h1 { color: #ff9f43; font-size: 24px; font-weight: 800; margin: 0 0 14px; }
+      #device-warning p { color: #9a9ab0; font-size: 15px; line-height: 1.55; margin: 0 0 10px; }
+      #device-warning .url {
+        margin-top: 14px;
+        font-size: 13px;
+        color: #5a5a70;
+        word-break: break-all;
+      }
+      #device-warning button {
+        margin-top: 20px;
+        background: #ff9f43;
+        color: #0d0d14;
+        border: none;
+        border-radius: 10px;
+        padding: 13px 24px;
+        font: 700 16px system-ui, sans-serif;
+        cursor: pointer;
+      }
     </style>
   </head>
   <body>
     <div id="app"></div>
+
+    <div id="device-warning">
+      <div class="card">
+        <div class="emoji">📱</div>
+        <h1>Best played on a phone</h1>
+        <p>
+          Technical Debt Simulator is built for mobile (portrait). On a desktop or
+          large screen it’ll look stretched and play rough.
+        </p>
+        <p>For the real experience, open this page on your phone.</p>
+        <div class="url" id="dw-url"></div>
+        <button id="dw-dismiss">Play anyway on this screen</button>
+      </div>
+    </div>
+
+    <script>
+      // Phone = a touch (coarse) pointer on a small screen. Anything else gets
+      // a friendly heads-up that it's designed for phones.
+      (function () {
+        var coarse = window.matchMedia('(pointer: coarse)').matches;
+        var smallSide = Math.min(window.innerWidth, window.innerHeight);
+        var isPhone = coarse && smallSide <= 540;
+        if (isPhone) return;
+        var w = document.getElementById('device-warning');
+        w.style.display = 'flex';
+        var u = document.getElementById('dw-url');
+        if (u) u.textContent = location.href;
+        document.getElementById('dw-dismiss').addEventListener('click', function () {
+          w.style.display = 'none';
+        });
+      })();
+    </script>
+
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>
