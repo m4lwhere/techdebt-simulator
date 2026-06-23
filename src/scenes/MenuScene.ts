@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { scaleOf } from '../config/layout';
 import { MENU_TAGLINES, pick } from '../config/flavor';
+import { sound } from '../audio/Sound';
 
 export class MenuScene extends Phaser.Scene {
   constructor() {
@@ -56,6 +57,8 @@ export class MenuScene extends Phaser.Scene {
       .setOrigin(0.5);
 
     this.input.once('pointerdown', () => {
+      sound.unlock();
+      sound.start();
       this.tweens.add({
         targets: [btn, btnText],
         scale: 0.92,

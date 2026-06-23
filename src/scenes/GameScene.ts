@@ -21,6 +21,7 @@ import {
   pick,
 } from '../config/flavor';
 import { Juice, flash, shake, type BurstColor } from '../utils/juice';
+import { sound } from '../audio/Sound';
 
 const CAREER_BAR_COLOR = 0xffd23f;
 
@@ -148,6 +149,7 @@ export class GameScene extends Phaser.Scene {
     if (this.bossPhase && this.boss && this.boss.isAlive()) {
       if (Phaser.Math.Distance.Between(x, y, this.boss.x, this.boss.y) <= this.boss.hitRadius) {
         this.boss.damage(1);
+        sound.bossHit();
         this.juice.burst(x, y, 'orange', 6);
         return;
       }
@@ -187,6 +189,7 @@ export class GameScene extends Phaser.Scene {
     // SHIP IT — fast, adds debt, kicks the can.
     this.shipBtn = this.makeButton(0xff9f43, '🚀\nSHIP IT', (b) => {
       this.engine.shipIt();
+      sound.ship();
       this.juice.pop(b.rect.x, b.rect.y - 78 * this.s, `+${TUNING.SHIP_BURST}m`, '#ffd23f', 24);
       this.juice.burst(b.rect.x, b.rect.y, 'orange', 8);
       if (Math.random() < 0.28) {
@@ -197,6 +200,7 @@ export class GameScene extends Phaser.Scene {
     // PAY IT DOWN — slow, no distance, drains debt + pressure.
     this.payBtn = this.makeButton(0x4a4a66, '🔧\nPAY DOWN', (b) => {
       this.engine.payDown();
+      sound.pay();
       this.juice.pop(b.rect.x, b.rect.y - 78 * this.s, `-$${TUNING.PAY_AMOUNT}`, '#7a9aff', 22);
       this.juice.burst(b.rect.x, b.rect.y, 'blue', 6);
       if (Math.random() < 0.3) {
@@ -284,12 +288,14 @@ export class GameScene extends Phaser.Scene {
       onSquash: (b) => {
         this.stats.bugsSquashed++;
         this.engine.squashBug();
+        sound.squash();
         this.juice.burst(b.x, b.y, 'green', 12);
         this.juice.pop(b.x, b.y, pick(SQUASH_LINES), '#33d17a', 18);
       },
       onExplode: (b) => {
         this.stats.bugsExploded++;
         this.engine.bugExploded();
+        sound.incident();
         this.juice.burst(b.x, b.y, 'red', 18);
         this.juice.pop(b.x, b.y, pick(INCIDENT_LINES), '#ff3344', 18);
         shake(this, 0.5);
@@ -354,6 +360,7 @@ export class GameScene extends Phaser.Scene {
       if (this.bugs.getLength() < TUNING.MAX_ACTIVE_BUGS) this.spawnBug();
     }
     shake(this, 0.35, 180);
+    sound.bossAttack();
     // Taunts appear below the boss, clear of the manager-quip slot up top.
     const ty = (this.boss?.y ?? 320 * this.s) + 180 * this.s;
     this.floatToast(pick(BOSS_TAUNTS), '#ff9f9f', ty);
@@ -364,6 +371,7 @@ export class GameScene extends Phaser.Scene {
     this.bossAttackTimer?.remove();
     this.bossAttackTimer = undefined;
     this.boss = undefined;
+    sound.bossDefeat();
     shake(this, 0.9, 450);
     flash(this, 0xffffff, 220);
     this.juice.burst(this.W / 2, 250 * this.s, 'orange', 40);
@@ -387,6 +395,7 @@ export class GameScene extends Phaser.Scene {
 
   private showPromotionSplash(next: LevelConfig) {
     this.frozen = true;
+    sound.promote();
     const cx = this.W / 2;
     const cy = this.H * 0.42;
     const s = this.s;
@@ -452,6 +461,7 @@ export class GameScene extends Phaser.Scene {
 
   private win() {
     this.gameOver = true;
+    sound.victory();
     flash(this, 0xffffff, 500);
     shake(this, 1, 500);
     this.time.delayedCall(600, () => {
@@ -476,6 +486,7 @@ export class GameScene extends Phaser.Scene {
 
   private activatePowerUp(kind: PowerUpKind, x: number, y: number) {
     this.juice.burst(x, y, BURST_BY_KIND[kind], 18);
+    sound.powerup();
 
     // Paste gets its own (longer) slot-machine reveal; everything else gets a
     // snappy 0.5s splash, then the effect fires.
@@ -803,7 +814,11 @@ export class GameScene extends Phaser.Scene {
         this.tweens.add({ targets: glyph, scale: { from: 1.6, to: 1 }, duration: 220, ease: 'Back.Out' });
         sub.setText(fixAll ? 'FIX-ALL!' : 'DEBT DUMP!').setColor(fixAll ? '#33d17a' : '#ff3344');
         flash(this, fixAll ? 0x33d17a : 0xff3344, 200);
-        if (!fixAll) shake(this, 0.6, 300);
+        if (fixAll) sound.spinWin();
+        else {
+          sound.spinLose();
+          shake(this, 0.6, 300);
+        }
         this.time.delayedCall(550, () => {
           overlay.forEach((o) => o.destroy());
           this.applyPasteOutcome(fixAll);
@@ -812,6 +827,7 @@ export class GameScene extends Phaser.Scene {
         return;
       }
       glyph.setText(Phaser.Utils.Array.GetRandom(faces));
+      sound.tick();
       this.time.delayedCall(intervals[i++], tick);
     };
     tick();
@@ -888,6 +904,7 @@ export class GameScene extends Phaser.Scene {
 
   private endRun() {
     this.gameOver = true;
+    sound.gameOver();
     shake(this, 1, 500);
     flash(this, 0xff0000, 400);
     this.time.delayedCall(500, () => {

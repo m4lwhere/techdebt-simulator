@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { sound } from './audio/Sound';
 import { BootScene } from './scenes/BootScene';
 import { MenuScene } from './scenes/MenuScene';
 import { GameScene } from './scenes/GameScene';
@@ -55,3 +56,18 @@ window.visualViewport?.addEventListener('scroll', fitToViewport);
 window.addEventListener('resize', fitToViewport);
 window.addEventListener('orientationchange', () => setTimeout(fitToViewport, 200));
 fitToViewport();
+
+// Audio must start inside a user gesture on mobile — unlock on first touch.
+window.addEventListener('pointerdown', () => sound.unlock(), { passive: true });
+
+// Always-available mute toggle (persisted in localStorage).
+const muteBtn = document.getElementById('mute-btn');
+if (muteBtn) {
+  const render = () => (muteBtn.textContent = sound.muted ? '🔇' : '🔊');
+  render();
+  muteBtn.addEventListener('click', () => {
+    sound.unlock();
+    sound.toggleMute();
+    render();
+  });
+}

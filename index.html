@@ -66,6 +66,24 @@
       }
       #app canvas { display: block; }
 
+      #mute-btn {
+        position: fixed;
+        top: 12px;
+        left: 10px;
+        z-index: 900;
+        width: 40px;
+        height: 40px;
+        padding: 0;
+        border-radius: 50%;
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        background: rgba(20, 22, 31, 0.55);
+        color: #fff;
+        font-size: 20px;
+        line-height: 40px;
+        text-align: center;
+        cursor: pointer;
+      }
+
       /* Shown only on non-phone devices (see script at end of body). */
       #device-warning {
         position: fixed;
@@ -118,6 +136,7 @@
   </head>
   <body>
     <div id="app"></div>
+    <button id="mute-btn" aria-label="Toggle sound">🔊</button>
 
     <div id="device-warning">
       <div class="card">
