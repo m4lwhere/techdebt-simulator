@@ -10,7 +10,6 @@ export class Hud {
   private debtText: Phaser.GameObjects.Text;
   private interestText: Phaser.GameObjects.Text;
   private levelText: Phaser.GameObjects.Text;
-  private leverageText: Phaser.GameObjects.Text;
   private barFill: Phaser.GameObjects.Rectangle;
   private topBarFill: Phaser.GameObjects.Rectangle;
   private topBarLabel: Phaser.GameObjects.Text;
@@ -96,8 +95,8 @@ export class Hud {
       .rectangle(14 * s, 128 * s, 0, 12 * s, 0x33d17a)
       .setOrigin(0, 0)
       .setDepth(102);
-    this.leverageText = scene.add
-      .text(W / 2, 129 * s, '', {
+    scene.add
+      .text(W / 2, 129 * s, 'COLLAPSE RISK', {
         fontFamily: 'system-ui, sans-serif',
         fontSize: font(9),
         color: '#ffffff',
@@ -118,7 +117,7 @@ export class Hud {
     this.topBarLabel.setText(label).setColor(labelCss);
   }
 
-  update(s: EngineSnapshot, sweetSpot: boolean) {
+  update(s: EngineSnapshot) {
     this.distanceText.setText(`${Math.floor(s.canDistance)} m`);
     this.debtText.setText(`DEBT  $${Math.floor(s.debt)}`);
     this.interestText.setText(`INTEREST  ${(s.interestRate * 100).toFixed(0)}%/s`);
@@ -127,16 +126,5 @@ export class Hud {
     // Green when safe, amber as it climbs, red near collapse.
     const color = s.pressure > 0.75 ? 0xff3344 : s.pressure > 0.4 ? 0xffaa00 : 0x33d17a;
     this.barFill.setFillStyle(color);
-
-    if (sweetSpot) {
-      this.leverageText.setText('🔥 SWEET SPOT — RIDING THE LINE 🔥');
-      this.leverageText.setColor('#ffd23f');
-    } else if (s.leverage < -0.45) {
-      this.leverageText.setText('too clean — leaving velocity on the table');
-      this.leverageText.setColor('#7a9aff');
-    } else {
-      this.leverageText.setText('OVER-LEVERAGED — PAY IT DOWN');
-      this.leverageText.setColor('#ff6b81');
-    }
   }
 }

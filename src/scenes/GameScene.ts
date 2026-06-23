@@ -8,6 +8,7 @@ import { Bug } from '../entities/Bug';
 import { PowerUp } from '../entities/PowerUp';
 import { Boss } from '../entities/Boss';
 import { Hud } from '../ui/Hud';
+import { ZoneMeter } from '../ui/ZoneMeter';
 import { scaleOf } from '../config/layout';
 import { POWERUPS, pickPowerUpKind, type PowerUpKind } from '../config/powerups';
 import {
@@ -61,6 +62,7 @@ const BURST_BY_KIND: Record<PowerUpKind, BurstColor> = {
 export class GameScene extends Phaser.Scene {
   private engine!: DebtEngine;
   private hud!: Hud;
+  private zone!: ZoneMeter;
   private juice!: Juice;
   private bugs!: Phaser.GameObjects.Group;
   private powerups!: Phaser.GameObjects.Group;
@@ -120,6 +122,8 @@ export class GameScene extends Phaser.Scene {
     this.engine = new DebtEngine(level);
     this.juice = new Juice(this);
     this.hud = new Hud(this);
+    this.zone = new ZoneMeter(this);
+    this.zone.layout(this.W, this.H, this.s);
     this.hud.setLevel(level.name);
     this.bugs = this.add.group();
     this.powerups = this.add.group();
@@ -263,13 +267,15 @@ export class GameScene extends Phaser.Scene {
     this.H = this.scale.height;
     this.s = scaleOf(this);
     if (this.shipBtn) this.layoutButtons();
+    if (this.zone) this.zone.layout(this.W, this.H, this.s);
   }
 
   /** Pulse a glow on whichever button the player should tap right now. */
   private updateButtonHints() {
     const pulse = 0.5 + 0.5 * Math.sin(this.time.now / 170);
-    // Over the line or pressure climbing → pay down; otherwise keep shipping.
-    const recommendPay = this.engine.pressure > 0.55 || this.engine.leverage > 0.05;
+    // Matches the ZoneMeter: in the red zone (or pressure spiking) → pay down.
+    const frac = this.engine.debt / (this.engine.sustainableDebt * 1.5);
+    const recommendPay = frac > 0.667 || this.engine.pressure > 0.7;
     this.highlightButton(this.shipBtn, !recommendPay, 0xffd23f, pulse);
     this.highlightButton(this.payBtn, recommendPay, 0xff6b6b, pulse);
   }
@@ -888,7 +894,8 @@ export class GameScene extends Phaser.Scene {
 
     const collapsed = this.engine.update(dt);
     this.stats.peakDebt = Math.max(this.stats.peakDebt, this.engine.debt);
-    this.hud.update(this.engine.snapshot(), this.engine.inSweetSpot);
+    this.hud.update(this.engine.snapshot());
+    this.zone.update(this.engine.debt, this.engine.sustainableDebt, this.time.now);
 
     // Top-edge bar: boss HP during a fight, otherwise progress to next stage.
     if (this.bossPhase && this.boss) {
