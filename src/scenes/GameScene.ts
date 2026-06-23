@@ -223,7 +223,7 @@ export class GameScene extends Phaser.Scene {
     captionColor: string,
     onTap: (b: ButtonRefs) => void,
   ): ButtonRefs {
-    const rect = this.add.rectangle(0, 0, 160 * this.s, 128 * this.s, color).setDepth(200);
+    const rect = this.add.rectangle(0, 0, 144 * this.s, 114 * this.s, color).setDepth(200);
     rect.setStrokeStyle(3 * this.s, 0xffffff, 0.4);
     const text = this.add
       .text(0, 0, label, {

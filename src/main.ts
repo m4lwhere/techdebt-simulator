@@ -58,7 +58,11 @@ window.addEventListener('orientationchange', () => setTimeout(fitToViewport, 200
 fitToViewport();
 
 // Audio must start inside a user gesture on mobile — unlock on first touch.
-window.addEventListener('pointerdown', () => sound.unlock(), { passive: true });
+// Listen broadly so whichever gesture event fires first does the unlock.
+const unlock = () => sound.unlock();
+window.addEventListener('pointerdown', unlock, { passive: true });
+window.addEventListener('touchend', unlock, { passive: true });
+window.addEventListener('keydown', unlock);
 
 // Always-available mute toggle (persisted in localStorage).
 const muteBtn = document.getElementById('mute-btn');

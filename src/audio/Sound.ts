@@ -39,8 +39,15 @@ class SoundManager {
       this.noiseBuf = this.ctx.createBuffer(1, len, this.ctx.sampleRate);
       const data = this.noiseBuf.getChannelData(0);
       for (let i = 0; i < len; i++) data[i] = Math.random() * 2 - 1;
+
+      // Prime the context inside the gesture (classic iOS/Safari unlock).
+      const prime = this.ctx.createBufferSource();
+      prime.buffer = this.ctx.createBuffer(1, 1, 22050);
+      prime.connect(this.ctx.destination);
+      prime.start(0);
     }
-    if (this.ctx.state === 'suspended') void this.ctx.resume();
+    // iOS can leave the context 'suspended' or 'interrupted' — resume either way.
+    if (this.ctx.state !== 'running') void this.ctx.resume();
   }
 
   setMuted(m: boolean) {
